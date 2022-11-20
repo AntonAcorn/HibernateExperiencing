@@ -14,20 +14,35 @@ public class App {
         Session session = sessionFactory.getCurrentSession();    //Из фабрики создаем сессиию
         try {
             session.beginTransaction();  //Открываем транзакцию
+                //****** GET ******
+////            Person person = session.get(Person.class, 1);  //1. Указываем какую именно сущность хотим получить (т.е. через Person.class он обращается к нужной таблице)
+////            System.out.println(person.getName());
+////            System.out.println(person.getAge());
+//
+//            ***** SAVE *******
+//            Person person = new Person("Bob", 13);
+//            Person person2 = new Person("Tom", 23);
+//            Person person3 = new Person("Mike", 3);
+//
+//            session.save(person);
+//            session.save(person2);
+//            session.save(person3);
 
-//            Person person = session.get(Person.class, 1);  //1. Указываем какую именно сущность хотим получить (т.е. через Person.class он обращается к нужной таблице)
-//            System.out.println(person.getName());
-//            System.out.println(person.getAge());
+            // ********Update*******
+//            Person person = session.get(Person.class, 2);
+//            person.setName("Artem");
 
-            Person person = new Person("Bob", 13);
-            Person person2 = new Person("Tom", 23);
-            Person person3 = new Person("Mike", 3);
+            //********Delete*******
+//            Person person = session.get(Person.class, 2);
+//            session.delete(person);
 
+            //*******getId********
+            Person person = new Person("Bender", 145);
             session.save(person);
-            session.save(person2);
-            session.save(person3);
 
             session.getTransaction().commit(); //выполняем транзацию
+
+            System.out.println(person.getId()); //уже после коммита у того объекта хранится id, hib делает это автоматом
         } finally {
             sessionFactory.close(); //закрываем фабрику
         }
