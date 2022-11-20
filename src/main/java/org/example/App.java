@@ -14,9 +14,18 @@ public class App {
         Session session = sessionFactory.getCurrentSession();    //Из фабрики создаем сессиию
         try {
             session.beginTransaction();  //Открываем транзакцию
-            Person person = session.get(Person.class, 1);  //1. Указываем какую именно сущность хотим получить (т.е. через Person.class он обращается к нужной таблице)
-            System.out.println(person.getName());
-            System.out.println(person.getAge());
+
+//            Person person = session.get(Person.class, 1);  //1. Указываем какую именно сущность хотим получить (т.е. через Person.class он обращается к нужной таблице)
+//            System.out.println(person.getName());
+//            System.out.println(person.getAge());
+
+            Person person = new Person("Bob", 13);
+            Person person2 = new Person("Tom", 23);
+            Person person3 = new Person("Mike", 3);
+
+            session.save(person);
+            session.save(person2);
+            session.save(person3);
 
             session.getTransaction().commit(); //выполняем транзацию
         } finally {
