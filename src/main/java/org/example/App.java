@@ -1,50 +1,66 @@
 package org.example;
 
 
-import org.example.model.Person;
+import org.example.model.Actor;
+import org.example.model.Movie;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class App {
     public static void main(String[] args) {   //Явно здесь файл hibernate.properties не подключается, но под копотом подключается. поэтому файл обязан называться hibernate.properties
-        Configuration configuration = new Configuration().addAnnotatedClass(Person.class); //передаем класс, который помечен @Entity
+        Configuration configuration = new Configuration().addAnnotatedClass(Actor.class).addAnnotatedClass(Movie.class); //передаем класс, который помечен @Entity
 
         SessionFactory sessionFactory = configuration.buildSessionFactory();  //Создаем фабрику
-        Session session = sessionFactory.getCurrentSession();    //Из фабрики создаем сессиию
-        try {
+
+        try (sessionFactory) {
+            Session session = sessionFactory.getCurrentSession();    //Из фабрики создаем сессиию
             session.beginTransaction();  //Открываем транзакцию
-                //****** GET ******
-////            Person person = session.get(Person.class, 1);  //1. Указываем какую именно сущность хотим получить (т.е. через Person.class он обращается к нужной таблице)
-////            System.out.println(person.getName());
-////            System.out.println(person.getAge());
+
+            //*********Создание**********
+//            Movie movie = new Movie("Pulp Fiction", 1994);
+//            Actor actor1 = new Actor("Harvey Keitel", 81);
+//            Actor actor2 = new Actor("Samuel L.Jackson", 72);
 //
-//            ***** SAVE *******
-//            Person person = new Person("Bob", 13);
-//            Person person2 = new Person("Tom", 23);
-//            Person person3 = new Person("Mike", 3);
+//            movie.setActors(new ArrayList<>(List.of(actor1, actor2))); //такой список неизменяемый,
+                                                                        // а new ArrayList<>(Arrays.asList()) изменяемый,
+            //обратная связь                                            // но нерасширяемый
+//            actor1.setMovies(new ArrayList<>(Collections.singletonList(movie)));//лист из одного элемента
+//            actor2.setMovies(new ArrayList<>(Collections.singletonList(movie)));
 //
-//            session.save(person);
-//            session.save(person2);
-//            session.save(person3);
+//            session.save(movie);
+//            session.save(actor1);
+//            session.save(actor2);
 
-            // ********Update*******
-//            Person person = session.get(Person.class, 2);
-//            person.setName("Artem");
+            //*********Получение**********
+//            Movie movie = session.get(Movie.class, 1);
+//            System.out.println(movie.getActors());
+//            Actor actor = session.get(Actor.class,1);
+//            System.out.println(actor.getMovies());
 
-            //********Delete*******
-//            Person person = session.get(Person.class, 2);
-//            session.delete(person);
+            //*********Изменение**********
+//            Movie movie = new Movie("Reservoir Dogs", 1992);
+//            Actor actor = session.get(Actor.class, 1);
+//            movie.setActors(new ArrayList<>(Collections.singletonList(actor)));//nosql
+//            actor.getMovies().add(movie); //hibernate
+//
+//            session.save(movie);
 
-            //*******getId********
-            Person person = new Person("Bender", 145);
-            session.save(person);
+            //*********Удаление**********
+            Actor actor = session.get(Actor.class,2);
+            System.out.println(actor.getMovies());
+
+            Movie movieToRemove = actor.getMovies().get(0);//фильм с индексом ноль из листа
+
+            actor.getMovies().remove(0);
+            movieToRemove.getActors().remove(actor);
+
 
             session.getTransaction().commit(); //выполняем транзацию
-
-            System.out.println(person.getId()); //уже после коммита у того объекта хранится id, hib делает это автоматом
-        } finally {
-            sessionFactory.close(); //закрываем фабрику
         }
     }
 }
