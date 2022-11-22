@@ -1,8 +1,8 @@
 package org.example;
 
-
 import org.example.model.Item;
 import org.example.model.Person;
+import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
@@ -17,68 +17,46 @@ public class App {
                 addAnnotatedClass(Person.class).
                 addAnnotatedClass(Item.class); //передаем класс, который помечен @Entity
 
-        SessionFactory sessionFactory = configuration.buildSessionFactory();  //Создаем фабрику
-        Session session = sessionFactory.getCurrentSession();    //Из фабрики создаем сессиию
+        SessionFactory sessionFactory = configuration.buildSessionFactory();
+        Session session = sessionFactory.getCurrentSession();
         try {
-            session.beginTransaction();  //Открываем транзакцию
-            //********Получаем person со всеми его item*******
-//            Person person = session.get(Person.class, 3);
-//            System.out.println(person);
-//            List<Item> items = person.getItems(); //вызывать геттеры тольео внутри транзакции, иначе hibernate не будет знать
-//            System.out.println(items);
+            session.beginTransaction();
+            //************По Person***********
+            Person person = session.get(Person.class,1);//здесь hibernate не получает товары, т.е. запрос
+                                                                    // только на человека
+            System.out.println("Мы получили человека");
 
-            //********Получаем item по Person*******
-//            Item item = session.get(Item.class, 5);
-//            System.out.println(item);
+            //получим связанные сущности(Lazy)
+            //person.getItems(); //при таком вызове может возникнуть ошибка, потому что компилятор проигнорирует геттер,
+            //который не дает никаких результатов. Решение - обернуть в Hibernate.initialize();
+            Hibernate.initialize(person.getItems());
+            System.out.println(person.getItems());  //только здесь делается второй запрос уже на таблицу товаров
+
+            //************По Item***********
+//            Item item = session.get(Item.class,1);
+//            System.out.println("Мы получили товар");
 //
-//            Person person = item.getOwner();
-//            System.out.println(person);
+//            System.out.println(item.getOwner());//жадный тип, выполняется один sql запрос в 32 строчке, потому что ManyTo One
 
-            ////********Кладем new item по выданному из базы человеку*******
-//            Person person = session.get(Person.class, 2);
-//            Item newItem = new Item("Item from Hibernate", person);
-//            //эта строчка не делает sql запрос в базу, мы просто обновляем данные для hibernate
-//            person.getItems().add(newItem); // hibernate кэширует, если не прописать обратную связь, то в бд все ок,
-//                                            //но Hibernate вернет страго человека, без нового элемента.
-//                                            //потому что он не будет делать новый запрос в базу, потому что хранит его в кэше
-//            session.save(newItem);
+            session.getTransaction().commit();
+            // session.close() автоматически после commit
+            //после жадного поглощения данный уже подгружены, соответственно,
+            // поле закрытия сессии можно использовать эти данные
 
-            ////********Создаем нового человека и новый заказ*******
-//            Person person = new Person("Klark", 28);
-//            Item newItem = new Item("Item from Hibernate 2", person);//связь со стороны человека
-//            //Collections.singletonList(newItem) создает список из одного товара(он незменяемый),
-//            //но если мы его кладем в new ArrayList, то он становится изменяемым
-//            person.setItems(new ArrayList<>(Collections.singletonList(newItem)));//связь со стороны человека
-//
-//            session.save(person);
-//            session.save(newItem);
+            //************ Как достать еще данные уже после закрытия сессии?***********
+            //открываем и начинаем сессию еще раз
+            session = sessionFactory.getCurrentSession();
+            session.beginTransaction();
+            System.out.println("Внутри второй транзацкии");
+            //Эта сессия ничего не знает о person из первой сессии, нам нужно тот объект привязать к этой сессии
 
-            ////********Проблема с каскадированием*******удаляем товар и человека
-//            Person person = session.get(Person.class, 3);//получаем человека
-//            List<Item> items = person.getItems();//получаем его товары
-//            for (Item item : items)         //удалили все товары на стороне товаров (делает hibernate) SQL
-//                session.remove(item);
-//            person.getItems().clear();      //удалили товары на стороне человека(с БД это несвязанно) нет SQL
-//                                            //необходимо, чтобы в кэше все было верно
+            person = (Person) session.merge(person);//то, что возвразает метод merge мы должны положить в переменную person
+//            List<Items> items = session.createQuery("select i from Item i where i.owner.id =:personId", Item.class). при помощи HQL запроса
+//                    setParameter("PersonId", person.getId()).getResultList();
 
-
-//            Person person = session.get(Person.class, 2); //удаляем человека
-//            //sql удаляет человека и делает каскадирование
-//            session.remove(person);
-//            //для правильного состояния hibernate кэша
-//            person.getItems().forEach(items -> items.setOwner(null));
-
-            ////********Меняем владельца существующего товара*******
-            Person person = session.get(Person.class, 1);
-            Item item = session.get(Item.class,2);
-            item.getOwner().getItems().remove(item);//NOSQL
-
-            item.setOwner(person);//SQL
-            person.getItems().add(item);//NOSQL
-
-
-            session.getTransaction().commit(); //выполняем транзацию
-
+            Hibernate.initialize(person.getItems());
+            session.getTransaction().commit();
+            System.out.println("Вне сессии");
         } finally {
             sessionFactory.close(); //закрываем фабрику
         }
