@@ -1,48 +1,50 @@
 package org.example;
 
 
+import org.example.model.Passport;
 import org.example.model.Person;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
+import javax.transaction.UserTransaction;
+
 public class App {
     public static void main(String[] args) {   //Явно здесь файл hibernate.properties не подключается, но под копотом подключается. поэтому файл обязан называться hibernate.properties
-        Configuration configuration = new Configuration().addAnnotatedClass(Person.class); //передаем класс, который помечен @Entity
+        Configuration configuration = new Configuration().addAnnotatedClass(Person.class)
+                .addAnnotatedClass(Passport.class); //передаем класс, который помечен @Entity
 
         SessionFactory sessionFactory = configuration.buildSessionFactory();  //Создаем фабрику
         Session session = sessionFactory.getCurrentSession();    //Из фабрики создаем сессиию
         try {
             session.beginTransaction();  //Открываем транзакцию
-                //****** GET ******
-////            Person person = session.get(Person.class, 1);  //1. Указываем какую именно сущность хотим получить (т.е. через Person.class он обращается к нужной таблице)
-////            System.out.println(person.getName());
-////            System.out.println(person.getAge());
+
+            //*********Добавление********************
+//            Person testPerson = new Person("Test Person", 50);
+//            Passport passport = new Passport(1234);
+//            testPerson.setPassport(passport);
+//            //testPerson.setPassport(passport);//обеспечение двусторонней связи, можно рефактор сделать и упаковать в setPassport
+//            session.save(testPerson);
+
+            //*********Чтение********************
+//            Person person = session.get(Person.class, 1);
+//            System.out.println(person.getPassport().getPassportNumber());
 //
-//            ***** SAVE *******
-//            Person person = new Person("Bob", 13);
-//            Person person2 = new Person("Tom", 23);
-//            Person person3 = new Person("Mike", 3);
-//
-//            session.save(person);
-//            session.save(person2);
-//            session.save(person3);
+//            Passport passport = session.get(Passport.class, 1);
+//            System.out.println(passport.getPerson().getName());
 
-            // ********Update*******
-//            Person person = session.get(Person.class, 2);
-//            person.setName("Artem");
+            //*********Переназначение********************
+//            Person person = session.get(Person.class, 1);
+//            person.getPassport().setPassportNumber(1234556);   //состояние persistence, поэтому hibernate отслеживает все состояния
 
-            //********Delete*******
-//            Person person = session.get(Person.class, 2);
-//            session.delete(person);
 
-            //*******getId********
-            Person person = new Person("Bender", 145);
-            session.save(person);
+            //*********Удаление********************
+            Person person = session.get(Person.class, 1);
+            session.remove(person);//благодаря каскадированию удалится и пасспорт, и человек
 
             session.getTransaction().commit(); //выполняем транзацию
 
-            System.out.println(person.getId()); //уже после коммита у того объекта хранится id, hib делает это автоматом
+
         } finally {
             sessionFactory.close(); //закрываем фабрику
         }
