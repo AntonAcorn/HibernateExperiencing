@@ -23,12 +23,11 @@ public class App {
             session.beginTransaction();  //Открываем транзакцию
 
             Person person = new Person("Test Cascading", 30);
-            Item item = new Item("Test Cascading item");
-            person.setItems(new ArrayList<>(Collections.singletonList(item)));
+            person.addItem(new Item("Test 1 Cascading item"));
+            person.addItem(new Item("Test 2 Cascading item"));
+            person.addItem(new Item("Test 3 Cascading item"));
 
-            //session.save(person);//Сохранение без каскадирования
-            session.persist(person);// вызов с каскадированием
-            //session.persist(item) // это делает уже hibernate блягодаря каскадированию
+            session.save(person);//Сохранение без каскадирования
 
             session.getTransaction().commit(); //выполняем транзацию
 
